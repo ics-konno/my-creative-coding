@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <script src="js/controls/OrbitControls.js"></script>
+  <script src="js/loaders/PLYLoader.js"></script>
+  <script src="js/effects/OutlineEffect.js"></script>
+  <script src="js/effects/StereoEffect.js"></script>
+  <script src="js/effects/AnaglyphEffect.js"></script>
+  <script src="index4/perlin.js"></script>
+  <script src="js/cameras/CinematicCamera.js"></script>
+  <title>Title</title>
+  <script>
+      // ページの読み込みを待つ
+      window.addEventListener('load', init);
+
+      function init() {
+          const canvas = document.querySelector("#myCanvas")
+
+          // レンダラーを作成
+          const renderer = new THREE.WebGLRenderer({
+              canvas
+          });
+          renderer.setPixelRatio(window.devicePixelRatio);
+          renderer.setSize(window.innerWidth, window.innerHeight);
+
+          // シーンを作成
+          const scene = new THREE.Scene();
+          // scene.fog = new THREE.Fog(0x000000, 5, 20);
+          scene.background = new THREE.Color(0xf0f0)
+
+          // カメラを作成
+          const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 15);
+          camera.position.set(3, 0.15, 3);
+
+          // orbitcontrol
+          const controls = new THREE.OrbitControls(camera)
+
+          // 光源を作成
+          scene.add(new THREE.PointLight(0xFFFFFF, 20, 50))
+          const light = new THREE.DirectionalLight(0xffffff, 5)
+          light.position.set(1,1,1).normalize()
+          scene.add(light)
+
+          const ambient = new THREE.AmbientLight(0x111111)
+          scene.add(ambient)
+
+
+          // 床を作成
+          const plane = new THREE.Mesh(
+              new THREE.PlaneBufferGeometry(40,40),
+              new THREE.MeshPhongMaterial({color: 0x999999, specular: 0x101010})
+          )
+          plane.rotation.x = -Math.PI / 2
+          plane.position.y = -0.5
+
+          scene.add(plane)
+          plane.receiveShadow = true
+
+
+          const tex = new THREE.TextureLoader().load("models/chair-ply/Chair_0.jpg")
+          const mat = new THREE.MeshStandardMaterial({map:tex, flatShading: true})
+          // const mat = new THREE.MeshStandardMaterial({color:0xffff00, flatShading: true})
+          const box = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5),
+          mat
+          )
+          box.position.x = 1
+          scene.add(box)
+
+
+          // モデルのロード
+          const loader = new THREE.PLYLoader()
+          loader.load("models/chair-ply/Chair.ply", geometry => {
+              console.log(geometry)
+              geometry.computeVertexNormals()
+              const texture = new THREE.TextureLoader().load("models/chair-ply/Chair_0.jpg")
+              // const material = new THREE.MeshStandardMaterial({color: 0x0055ff, flatShading: true})
+              const material = new THREE.MeshStandardMaterial({map:texture, flatShading: true})
+              const mesh = new THREE.Mesh(geometry, material)
+
+
+
+              mesh.position.y = -0.2
+              mesh.position.z = 0.3
+              mesh.rotation.x = -Math.PI / 2
+              mesh.scale.multiplyScalar(0.001)
+
+              mesh.castShadow = true
+              mesh.receiveShadow = true
+
+              scene.add(mesh)
+          })
+
+
+          // レイキャストの作成
+          const raycaster = new THREE.Raycaster()
+
+          tick();
+
+          // 毎フレーム時に実行されるループイベントです
+          function tick() {
+              requestAnimationFrame(tick);
+
+              renderer.render(scene, camera); // レンダリング
+          }
+
+
+
+      }
+  </script>
+</head>
+<body>
+  <canvas id="myCanvas"></canvas>
+</body>
+</html>
